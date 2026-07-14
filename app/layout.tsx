@@ -3,9 +3,9 @@ import { siteUrl } from "@/lib/site";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
-const title = "RedGifs Downloader – Save RedGifs Videos as MP4 in HD";
+const title = "Free RedGifs Downloader – Save RedGifs Videos as MP4 in HD";
 const description =
-  "Free RedGifs downloader — paste a RedGifs link and save the video as an MP4 in HD or SD. No account, no watermark, works on iPhone, Android, and desktop.";
+  "Free RedGifs downloader. Paste a RedGifs link and save the video as an MP4 in HD or SD. No account, no watermark, works on iPhone, Android, and desktop.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     title,
     description,
   },
-  // Self-label for SafeSearch per Google's guidance for adult-adjacent sites.
   other: { rating: "adult" },
 };
 

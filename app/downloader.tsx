@@ -69,7 +69,7 @@ export default function Downloader() {
           aria-label="RedGifs video URL"
         />
         <button type="submit" disabled={loading || !input.trim()}>
-          {loading ? "Fetching…" : "Fetch"}
+          {loading ? "Downloading..." : "Download"}
         </button>
       </form>
 
