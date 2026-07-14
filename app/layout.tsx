@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const title = "RedGifs Downloader – Save RedGifs Videos as MP4 in HD";
 const description =
@@ -39,7 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
