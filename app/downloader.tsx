@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import posthog from "posthog-js";
 
 interface VideoInfo {
   id: string;
@@ -30,6 +31,8 @@ export default function Downloader() {
     e.preventDefault();
     if (!input.trim() || loading) return;
 
+    posthog.capture("url_submitted", { url_length: input.trim().length });
+
     setLoading(true);
     setError(null);
     setVideo(null);
@@ -38,17 +41,27 @@ export default function Downloader() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Something went wrong. Try again.");
+        posthog.capture("lookup_failed", { error_status: res.status });
       } else {
         setVideo(data);
+        posthog.capture("video_loaded", {
+          has_hd: data.hasHd,
+          has_sd: data.hasSd,
+          duration: data.duration,
+          width: data.width,
+          height: data.height,
+        });
       }
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
+      posthog.capture("lookup_failed", { error_status: 0 });
     } finally {
       setLoading(false);
     }
   }
 
   function reset() {
+    posthog.capture("download_another_clicked");
     setInput("");
     setVideo(null);
     setError(null);
@@ -89,12 +102,20 @@ export default function Downloader() {
           </div>
           <div className="actions">
             {video.hasHd && (
-              <a className="download hd" href={`/api/download?id=${encodeURIComponent(video.id)}&quality=hd`}>
+              <a
+                className="download hd"
+                href={`/api/download?id=${encodeURIComponent(video.id)}&quality=hd`}
+                onClick={() => posthog.capture("download_clicked", { quality: "hd", video_id: video.id })}
+              >
                 Download HD
               </a>
             )}
             {video.hasSd && (
-              <a className="download sd" href={`/api/download?id=${encodeURIComponent(video.id)}&quality=sd`}>
+              <a
+                className="download sd"
+                href={`/api/download?id=${encodeURIComponent(video.id)}&quality=sd`}
+                onClick={() => posthog.capture("download_clicked", { quality: "sd", video_id: video.id })}
+              >
                 Download SD
               </a>
             )}
