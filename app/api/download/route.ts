@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { fetchMedia, parseRedgifsId, RedgifsError } from "@/lib/redgifs";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
   }
   const requestedQuality = params.get("quality") === "sd" ? "sd" : "hd";
 
+  const posthog = getPostHogClient();
   try {
     let actualQuality = requestedQuality;
     const { upstream } = await fetchMedia(id, (gif) => {
@@ -38,6 +40,18 @@ export async function GET(request: NextRequest) {
     const contentLength = upstream.headers.get("content-length");
     if (contentLength) headers.set("Content-Length", contentLength);
 
+    posthog.capture({
+      distinctId: id,
+      event: "download_initiated",
+      properties: {
+        video_id: id,
+        requested_quality: requestedQuality,
+        actual_quality: actualQuality,
+        quality_fallback: actualQuality !== requestedQuality,
+      },
+    });
+    await posthog.flush();
+
     return new Response(upstream.body, { headers });
   } catch (err) {
     if (err instanceof RedgifsError) {
@@ -47,8 +61,20 @@ export async function GET(request: NextRequest) {
           : err.status === 410
             ? "This video has been removed."
             : "Download failed — RedGifs is unreachable. Try again in a moment.";
+      posthog.capture({
+        distinctId: id,
+        event: "download_error",
+        properties: { video_id: id, requested_quality: requestedQuality, error_status: err.status },
+      });
+      await posthog.flush();
       return errorResponse(message, err.status);
     }
+    posthog.capture({
+      distinctId: id,
+      event: "download_error",
+      properties: { video_id: id, requested_quality: requestedQuality, error_status: 500 },
+    });
+    await posthog.flush();
     return errorResponse("Download failed. Try again.", 500);
   }
 }
